@@ -48,7 +48,7 @@ __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, in
         }
 
         for (int c = 0; c < channels; c++) {
-            dst[pixel_index + c] = (unsigned char)(filtered_value[c] / (weight_sum[c] + 1e-6)); // Évite la division par 0
+            dst[(y * width + x) * channels + c] = (unsigned char)(filtered_value[c] / (weight_sum[c] + 1e-6)); // Évite la division par 0
         }
     }
 }
