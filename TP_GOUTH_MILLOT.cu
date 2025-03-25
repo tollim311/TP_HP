@@ -6,10 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <cuda_runtime.h>
 
 // Fonction Gaussienne (calculée sur CPU)
-__host__ __device__ double gaussian(double x, double sigma) {
+__host__ double gaussian(double x, double sigma) {
     return exp(-(x * x) / (2.0 * sigma * sigma));
 }
 
@@ -23,8 +22,7 @@ __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, in
 
     if (x >= radius && x < width - radius && y >= radius && y < height - radius) {
         
-        int pixel_index = (y * width + x) * channels;
-        unsigned char *center_pixel = src + pixel_index;
+        unsigned char *center_pixel = src + (y * width + x) * channels;
 
         double weight_sum[3] = {0.0, 0.0, 0.0};
         double filtered_value[3] = {0.0, 0.0, 0.0};
@@ -109,7 +107,7 @@ int main(int argc, char *argv[]) {
     bilateral_filter_cuda<<<gridSize, blockSize>>>(d_src, d_dst, width, height, channels, d, sigma_color, sigma_space, d_spatial_weights);
     cudaDeviceSynchronize();
 
-    // Copier les résultats vers la RAM
+    // Copier les résultats vers le CPU
     cudaMemcpy(filtered_image, d_dst, width * height * channels, cudaMemcpyDeviceToHost);
 
     // Sauvegarder l'image filtrée
@@ -119,7 +117,7 @@ int main(int argc, char *argv[]) {
         printf("Filtrage bilatéral terminé. Image enregistrée sous %s\n", argv[2]);
     }
 
-    // Libérer la mémoire
+    // Libérer la mémoire du GPU et du CPU
     stbi_image_free(image);
     free(filtered_image);
     free(spatial_weights);
