@@ -13,7 +13,7 @@ __host__ __device__ double gaussian(double x, double sigma) {
     return exp(-(x * x) / (2.0 * sigma * sigma));
 }
 
-// Filtre bilatéral en CUDA
+// Filtre bilatéral
 __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, int width, int height, int channels, 
                                       int d, double sigma_color, double sigma_space, double *spatial_weights) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -83,14 +83,6 @@ int main(int argc, char *argv[]) {
             int x = i - radius, y = j - radius;
             spatial_weights[i * d + j] = gaussian(sqrt(x * x + y * y), sigma_space);
         }
-    }
-
-    // Allocation mémoire pour l'image de sortie
-    unsigned char *filtered_image = (unsigned char *)malloc(width * height * channels);
-    if (!filtered_image) {
-        printf("Erreur d'allocation mémoire pour l'image filtrée !\n");
-        free(spatial_weights);
-        return 1;
     }
 
     // Allocation mémoire sur GPU
