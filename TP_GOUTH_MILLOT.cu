@@ -8,7 +8,7 @@
 #include <math.h>
 
 // Fonction Gaussienne (calculée sur CPU)
-__global__ double gaussian(double x, double sigma) {
+__host__ __device__ double gaussian(double x, double sigma) {
     return exp(-(x * x) / (2.0 * sigma * sigma));
 }
 
