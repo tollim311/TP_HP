@@ -16,13 +16,15 @@ __host__ __device__ double gaussian(double x, double sigma) {
 // Filtre bilatéral
 __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, int width, int height, int channels, 
                                       int d, double sigma_color, double sigma_space, double *spatial_weights) {
+    
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int radius = d / 2;
 
     if (x >= radius && x < width - radius && y >= radius && y < height - radius) {
+        
         int pixel_index = (y * width + x) * channels;
-        unsigned char *center_pixel = &src[pixel_index];
+        unsigned char *center_pixel = src + pixel_index;
 
         double weight_sum[3] = {0.0, 0.0, 0.0};
         double filtered_value[3] = {0.0, 0.0, 0.0};
@@ -71,18 +73,21 @@ int main(int argc, char *argv[]) {
     double sigma_color = 75.0, sigma_space = 75.0;
     int radius = d / 2;
 
-    // Calcul des poids spatiaux (en CPU, car ils sont fixes)
+    // Calcul des poids spatiaux (en CPU, car ils sont fixes évite un grand coup de calcul sur GPU)
     double *spatial_weights = (double *)malloc(d * d * sizeof(double));
-    if (!spatial_weights) {
-        printf("Erreur d'allocation mémoire pour les poids spatiaux !\n");
-        return 1;
-    }
-
     for (int i = 0; i < d; i++) {
         for (int j = 0; j < d; j++) {
             int x = i - radius, y = j - radius;
             spatial_weights[i * d + j] = gaussian(sqrt(x * x + y * y), sigma_space);
         }
+    }
+
+    // Allocation mémoire pour l'image de sortie
+    unsigned char *filtered_image = (unsigned char *)malloc(width * height * channels);
+    if (!filtered_image) {
+        printf("Erreur d'allocation mémoire pour l'image filtrée !\n");
+        free(spatial_weights);
+        return 1;
     }
 
     // Allocation mémoire sur GPU
