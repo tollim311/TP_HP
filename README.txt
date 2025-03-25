@@ -1,8 +1,13 @@
 READ ME
-Instruction d'execution pour millottheo-tp1.c
+Instruction d'execution pour TP_GOUTH_MILLOT.c
 
-Compilation : gcc millottheo-tp1.c -o exe
+Compilation : gcc TP_GOUTH_MILLOT.c -o exe
 Execution : ./exe
 
 Commentaire doxygen: doxygen -g
                      doxygen Doxyfile
+                     
+                     
+                     
+source : 
+	https://github.com/abhijitnathwani/image-processing
