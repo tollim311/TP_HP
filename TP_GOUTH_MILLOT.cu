@@ -7,35 +7,53 @@
 #include <stdlib.h>
 #include <math.h>
 
-// Fonction Gaussienne (calculée sur CPU)
+// Fonction Gaussienne
+// Doit être déclarée en __host__ __device__ pour être utilisée dans le noyau CUDA et en CPU
+// x : valeur d'entrée
+// sigma : écart-type
 __host__ __device__ double gaussian(double x, double sigma) {
     return exp(-(x * x) / (2.0 * sigma * sigma));
 }
 
 // Filtre bilatéral
+// src : image d'entrée
+// dst : image de sortie
+// width, height : dimensions de l'image
+// channels : nombre de canaux de couleur
+// d : taille du filtre, fenêtre de filtrage
+// sigma_color : paramètre de préservation des contours
+// sigma_space : paramètre de filtrage spatial
+// spatial_weights : tableau des poids spatiaux
 __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, int width, int height, int channels, 
                                       int d, double sigma_color, double sigma_space, double *spatial_weights) {
     
+    // Calcul du pixel traité
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int radius = d / 2;
 
+    // Vérifier la proximité des bords pour éviter de chercher des pixels hors image
     if (x >= radius && x < width - radius && y >= radius && y < height - radius) {
         
+        // Calcul du pixel central
         unsigned char *center_pixel = src + (y * width + x) * channels;
 
         double weight_sum[3] = {0.0, 0.0, 0.0};
         double filtered_value[3] = {0.0, 0.0, 0.0};
 
+        // Parcours des pixels voisins
         for (int i = 0; i < d; i++) {
             for (int j = 0; j < d; j++) {
                 int nx = x + j - radius;
                 int ny = y + i - radius;
 
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+
+                    // Calcul des poids des pixels voisins
                     int neighbor_index = (ny * width + nx) * channels;
                     unsigned char *neighbor_pixel = &src[neighbor_index];
 
+                    // Application du filtre, calcul de la valeur filtrée
                     for (int c = 0; c < channels; c++) {
                         double range_weight = gaussian(abs(neighbor_pixel[c] - center_pixel[c]), sigma_color);
                         double weight = spatial_weights[i * d + j] * range_weight;
@@ -47,6 +65,7 @@ __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, in
             }
         }
 
+        // Normalisation de l'image
         for (int c = 0; c < channels; c++) {
             dst[(y * width + x) * channels + c] = (unsigned char)(filtered_value[c] / (weight_sum[c] + 1e-6)); // Évite la division par 0
         }
@@ -55,11 +74,19 @@ __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, in
 
 // Fonction principale
 int main(int argc, char *argv[]) {
+
+    // Calcul du temps d'éxecution
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+
+    // Lecture des noms d'images
     if (argc < 3) {
         printf("Usage: %s <input_image> <output_image>\n", argv[0]);
         return 1;
     }
 
+    // Chargement de l'image
     int width, height, channels;
     unsigned char *image = stbi_load(argv[1], &width, &height, &channels, 0);
     if (!image) {
@@ -67,6 +94,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Paramètres du filtre
     int d = 5;
     double sigma_color = 75.0, sigma_space = 75.0;
     int radius = d / 2;
@@ -103,7 +131,7 @@ int main(int argc, char *argv[]) {
     dim3 blockSize(16, 16);
     dim3 gridSize((width + blockSize.x - 1) / blockSize.x, (height + blockSize.y - 1) / blockSize.y);
 
-    // Lancer le noyau CUDA
+    // Execution de la fonction sur le GPU
     bilateral_filter_cuda<<<gridSize, blockSize>>>(d_src, d_dst, width, height, channels, d, sigma_color, sigma_space, d_spatial_weights);
     cudaDeviceSynchronize();
 
@@ -124,6 +152,14 @@ int main(int argc, char *argv[]) {
     cudaFree(d_src);
     cudaFree(d_dst);
     cudaFree(d_spatial_weights);
+
+
+    // Recupération et affichage du temps d'éxecution
+    end = clock();
+
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Temps d'exécution : %f secondes\n", cpu_time_used);
+
 
     return 0;
 }

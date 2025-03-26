@@ -1,13 +1,13 @@
 READ ME
+
 Instruction d'execution pour TP_GOUTH_MILLOT.c
 
-Compilation : gcc TP_GOUTH_MILLOT.c -lm
-Execution : ./a.out <image name> <output name>
+	Compilation : gcc TP_GOUTH_MILLOT.c -lm
+	Execution : ./a.out <image name> <output name>
 
-Commentaire doxygen: doxygen -g
-                     doxygen Doxyfile
-                     
-                     
-                     
-source : 
-	https://github.com/abhijitnathwani/image-processing
+Instruction d'execution pour TP_GOUTH_MILLOT.cu sur GPU
+
+	Compilation : nvcc TP_GOUTH_MILLOT.c -lm
+	Execution : ./a.out <image name> <output name>                    
+ 
+Temps d'éxecution : 0.354 s sur le CPU // XXX s sur le GPU

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <time.h>
 
 // Gaussian function
 double gaussian(double x, double sigma) {
@@ -78,6 +79,13 @@ void bilateral_filter(unsigned char *src, unsigned char *dst, int width, int hei
 
 // Main function
 int main(int argc, char *argv[]) {
+
+    clock_t start, end;
+    double cpu_time_used;
+
+    start = clock();
+
+
     if (argc < 3) {
         printf("Usage: %s <input_image> <output_image>\n", argv[0]);
         return 1;
@@ -121,5 +129,12 @@ int main(int argc, char *argv[]) {
     free(filtered_image);
 
     printf("Bilateral filtering complete. Output saved as %s\n", argv[2]);
+
+    end = clock(); // Marquer la fin du chronomètre
+
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("Temps d'exécution : %f secondes\n", cpu_time_used);
+
+    
     return 0;
 }
