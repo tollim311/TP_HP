@@ -10,4 +10,4 @@ Instruction d'execution pour TP_GOUTH_MILLOT.cu sur GPU
 	Compilation : nvcc TP_GOUTH_MILLOT.c -lm
 	Execution : ./a.out <image name> <output name>                    
  
-Temps d'éxecution : 0.354 s sur le CPU // XXX s sur le GPU
+Temps d'éxecution : ~ 0.4 s sur le CPU // 0.23 s sur le GPU

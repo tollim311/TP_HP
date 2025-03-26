@@ -47,21 +47,18 @@ __global__ void bilateral_filter_cuda(unsigned char *src, unsigned char *dst, in
                 int nx = x + j - radius;
                 int ny = y + i - radius;
 
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                // Calcul des poids des pixels voisins
+                int neighbor_index = (ny * width + nx) * channels;
+                unsigned char *neighbor_pixel = &src[neighbor_index];
 
-                    // Calcul des poids des pixels voisins
-                    int neighbor_index = (ny * width + nx) * channels;
-                    unsigned char *neighbor_pixel = &src[neighbor_index];
-
-                    // Application du filtre, calcul de la valeur filtrée
-                    for (int c = 0; c < channels; c++) {
-                        double range_weight = gaussian(abs(neighbor_pixel[c] - center_pixel[c]), sigma_color);
-                        double weight = spatial_weights[i * d + j] * range_weight;
-
-                        filtered_value[c] += neighbor_pixel[c] * weight;
-                        weight_sum[c] += weight;
-                    }
+                // Application du filtre, calcul de la valeur filtrée
+                for (int c = 0; c < channels; c++) {
+                    double range_weight = gaussian(abs(neighbor_pixel[c] - center_pixel[c]), sigma_color);
+                    double weight = spatial_weights[i * d + j] * range_weight;
+                    filtered_value[c] += neighbor_pixel[c] * weight;
+                    weight_sum[c] += weight;
                 }
+
             }
         }
 
